@@ -30,51 +30,41 @@ class Birthday:
 
     @value.setter
     def value(self, date):
-        if date is not None and not isinstance(date, datetime):
+        if not isinstance(date, datetime):
             raise ValueError("Birthday must be a datetime object")
 
         # Перевірка на коректність введеного дня народження
-        if date is not None and date > datetime.now():
+        if date > datetime.now():
             raise ValueError("Birthday cannot be in the future")
 
         self._value = date
 
-    def days_to_birthday(self):
-        if self.value is None:
-            return None
-
-        today = datetime.now()
-        next_birthday = datetime(today.year, self.value.month, self.value.day)
-
-        if today > next_birthday:
-            next_birthday = datetime(today.year + 1, self.value.month, self.value.day)
-
-        days_left = (next_birthday - today).days
-        return days_left
-
 class Record:
     def __init__(self, name, phone=None, birthday=None):
         self.name = name
-        self.fields = []
-        if phone is not None:
-            self.add_field(phone)
-        if birthday is not None:
-            self.add_field(birthday)
-
-    def add_field(self, field):
-        self.fields.append(field)
-
-    def remove_field(self, field):
-        self.fields.remove(field)
-
-    def edit_field(self, field, new_value):
-        field.value = new_value
+        self.phone = phone
+        self.birthday = birthday
 
     def matches_criteria(self, criteria):
-        for field in self.fields:
-            if field.matches_criteria(criteria):
-                return True
+        if self.name.matches_criteria(criteria):
+            return True
+        if self.phone and self.phone.matches_criteria(criteria):
+            return True
+        if self.birthday and self.birthday.matches_criteria(criteria):
+            return True
         return False
+
+    def days_to_birthday(self):
+        if self.birthday and self.birthday.value is not None:
+            today = datetime.now()
+            next_birthday = datetime(today.year, self.birthday.value.month, self.birthday.value.day)
+
+            if today > next_birthday:
+                next_birthday = datetime(today.year + 1, self.birthday.value.month, self.birthday.value.day)
+
+            days_left = (next_birthday - today).days
+            return days_left
+        return None
 
 class Field:
     def __init__(self, value):
@@ -135,8 +125,7 @@ def change_phone(contact_info):
     name, phone = contact_info.split(' ')
     record = address_book.data.get(name)
     if record:
-        phone_field = record.fields[0]
-        phone_field.value = phone
+        record.phone.value = phone
         return "Phone number updated successfully."
     else:
         raise KeyError
@@ -145,8 +134,7 @@ def change_phone(contact_info):
 def show_phone(name):
     record = address_book.data.get(name)
     if record:
-        phone_field = record.fields[0]
-        return phone_field.value
+        return record.phone.value
     else:
         raise KeyError
 
@@ -154,7 +142,7 @@ def show_all_contacts():
     if len(address_book.data) == 0:
         return "No contacts found."
     else:
-        return "\n".join([f"{name}: {record.fields[0].value}" for name, record in address_book.data.items()])
+        return "\n".join([f"{name}: {record.phone.value}" for name, record in address_book.data.items()])
 
 def command_parser(command):
     command = command.strip()
